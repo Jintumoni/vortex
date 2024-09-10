@@ -1,4 +1,4 @@
-name: CI-CD for Vortex 
+name: CI for Vortex 
 
 on:
   push
