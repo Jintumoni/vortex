@@ -38,7 +38,7 @@ const (
 	TokenVertex
 	TokenEdge
 	TokenRelation
-  TokenQuery
+	TokenQuery
 )
 
 var ReservedKeywords = map[string]TokenType{
@@ -55,7 +55,7 @@ var ReservedKeywords = map[string]TokenType{
 	"Vertex":     TokenVertex,
 	"Relation":   TokenRelation,
 	"Edge":       TokenEdge,
-  "Query":      TokenQuery,
+	"Query":      TokenQuery,
 }
 
 type Token struct {

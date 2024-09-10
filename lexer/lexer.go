@@ -7,7 +7,7 @@ import (
 )
 
 type LexerInterface interface {
-  GetNextToken() *Token
+	GetNextToken() *Token
 }
 
 type Lexer struct {
@@ -17,12 +17,12 @@ type Lexer struct {
 }
 
 func NewLexer(r io.Reader) *Lexer {
-  data, _ := io.ReadAll(r)
-  return &Lexer{
-    Index: 0,
-    CurrentToken: nil,
-    Input: data,
-  }
+	data, _ := io.ReadAll(r)
+	return &Lexer{
+		Index:        0,
+		CurrentToken: nil,
+		Input:        data,
+	}
 }
 
 func (l *Lexer) Peek() byte {
@@ -44,9 +44,9 @@ func (l *Lexer) ignoreSpace() {
 }
 
 func (l *Lexer) getNumberToken() *Token {
-  if !unicode.IsNumber(rune(l.Input[l.Index])) {
-    return &Token{TokenInvalid, "INVALID"}
-  }
+	if !unicode.IsNumber(rune(l.Input[l.Index])) {
+		return &Token{TokenInvalid, "INVALID"}
+	}
 
 	buffer := bytes.Buffer{}
 	for l.Index < len(l.Input) && unicode.IsNumber(rune(l.Input[l.Index])) {
@@ -58,9 +58,9 @@ func (l *Lexer) getNumberToken() *Token {
 }
 
 func (l *Lexer) getIDToken() *Token {
-  if !unicode.IsLetter(rune(l.Input[l.Index])) {
-    return &Token{TokenInvalid, "INVALID"}
-  }
+	if !unicode.IsLetter(rune(l.Input[l.Index])) {
+		return &Token{TokenInvalid, "INVALID"}
+	}
 
 	buffer := bytes.Buffer{}
 	for l.Index < len(l.Input) {
@@ -72,10 +72,10 @@ func (l *Lexer) getIDToken() *Token {
 		l.advance()
 	}
 
-  tokenType, ok := ReservedKeywords[buffer.String()]
-  if ok {
-    return &Token{tokenType, buffer.String()}
-  }
+	tokenType, ok := ReservedKeywords[buffer.String()]
+	if ok {
+		return &Token{tokenType, buffer.String()}
+	}
 
 	return &Token{TokenIdentifier, buffer.String()}
 }
@@ -83,9 +83,9 @@ func (l *Lexer) getIDToken() *Token {
 func (l *Lexer) getStringToken() *Token {
 	buffer := bytes.Buffer{}
 
-  if l.Input[l.Index] != '"' {
-    return &Token{TokenInvalid, "INVALID"}
-  }
+	if l.Input[l.Index] != '"' {
+		return &Token{TokenInvalid, "INVALID"}
+	}
 	l.advance()
 
 	for l.Index < len(l.Input) && l.Input[l.Index] != '"' {
@@ -93,9 +93,9 @@ func (l *Lexer) getStringToken() *Token {
 		l.advance()
 	}
 
-  if l.Index >= len(l.Input) || l.Input[l.Index] != '"' {
-    return &Token{TokenInvalid, "INVALID"}
-  }
+	if l.Index >= len(l.Input) || l.Input[l.Index] != '"' {
+		return &Token{TokenInvalid, "INVALID"}
+	}
 	l.advance()
 
 	return &Token{TokenStringConstant, buffer.String()}
@@ -104,9 +104,9 @@ func (l *Lexer) getStringToken() *Token {
 func (l *Lexer) GetNextToken() *Token {
 	l.ignoreSpace()
 
-  if l.Index >= len(l.Input) {
-    return &Token{TokenEOF, "EOF"}
-  }
+	if l.Index >= len(l.Input) {
+		return &Token{TokenEOF, "EOF"}
+	}
 
 	if unicode.IsLetter(rune(l.Input[l.Index])) {
 		return l.getIDToken()
@@ -150,38 +150,38 @@ func (l *Lexer) GetNextToken() *Token {
 		return &Token{TokenRSB, "]"}
 	case '.':
 		if l.Peek() == '.' {
-      l.advance()
-      l.advance()
+			l.advance()
+			l.advance()
 			return &Token{TokenRange, ".."}
 		} else {
-      l.advance()
+			l.advance()
 			return &Token{TokenDot, "."}
 		}
 	case '<':
 		if l.Peek() == '=' {
-      l.advance()
-      l.advance()
+			l.advance()
+			l.advance()
 			return &Token{TokenLessThanEqual, "<="}
 		} else {
-      l.advance()
+			l.advance()
 			return &Token{TokenLessThan, "<"}
 		}
 	case '>':
 		if l.Peek() == '=' {
-      l.advance()
-      l.advance()
+			l.advance()
+			l.advance()
 			return &Token{TokenGreaterThanEqual, ">="}
 		} else {
-      l.advance()
+			l.advance()
 			return &Token{TokenGreaterThan, ">"}
 		}
 	case '=':
-    l.advance()
+		l.advance()
 		return &Token{TokenEqual, "="}
 	case '"':
 		return l.getStringToken()
 	default:
-    l.advance()
+		l.advance()
 		return &Token{TokenInvalid, "INVALID"}
 	}
 }

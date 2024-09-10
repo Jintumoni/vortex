@@ -125,7 +125,7 @@ func TestEdgeDef(t *testing.T) {
 
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenEdge, Value: "Edge"}).Once()
 	// mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenLCB, Value: "{"}).Once()
-  mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIdentifier, Value: "LivesIn"}).Once()
+	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIdentifier, Value: "LivesIn"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIdentifier, Value: "OneWay"}).Once()
 	// mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenRCB, Value: "}"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenEOF, Value: "EOF"}).Once()
@@ -146,7 +146,7 @@ func TestVertexInit(t *testing.T) {
 	mockLexer := new(mocks.MockLexer)
 
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenVertex, Value: "Vertex"}).Once()
-  mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIdentifier, Value: "Person1"}).Once()
+	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIdentifier, Value: "Person1"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIdentifier, Value: "Person"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenLCB, Value: "{"}).Once()
 
@@ -207,11 +207,11 @@ func TestRelationInit(t *testing.T) {
 
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenRelation, Value: "Relation"}).Once()
 	// mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenLCB, Value: "{"}).Once()
-  mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIdentifier, Value: "LivesIn"}).Once()
-  mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenLCB, Value: "{"}).Once()
+	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIdentifier, Value: "LivesIn"}).Once()
+	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenLCB, Value: "{"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIdentifier, Value: "Person1"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIdentifier, Value: "Country1"}).Once()
-  mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenRCB, Value: "}"}).Once()
+	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenRCB, Value: "}"}).Once()
 	// mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenRCB, Value: "}"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenEOF, Value: "EOF"}).Once()
 
@@ -525,7 +525,7 @@ func TestFactorVertexTermWithCondition(t *testing.T) {
 	queryNode, err := p.queryStatement()
 	assert.NoError(t, err)
 
-  query := queryNode.(*nodes.QueryStatementNode)
+	query := queryNode.(*nodes.QueryStatementNode)
 
 	condition := query.Expression.(*nodes.VertexTermNode).Conditions.(*nodes.BinaryNode)
 	assert.Equal(t, lexer.TokenAnd, condition.Operator.Type)
@@ -616,18 +616,17 @@ func TestFactorWithBuiltinFunction(t *testing.T) {
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenEOF, Value: "EOF"}).Once()
 
 	p := NewParser(mockLexer)
-  functionNode, err := p.factor()
-  assert.NoError(t, err)
+	functionNode, err := p.factor()
+	assert.NoError(t, err)
 
-  function := functionNode.(*nodes.SumFuncNode)
-  assert.Equal(t, function.FunctionName, nodes.SumFunc)
+	function := functionNode.(*nodes.SumFuncNode)
+	assert.Equal(t, function.FunctionName, nodes.SumFunc)
 
-  args := function.Args
-  assert.Len(t, args, 1)
+	args := function.Args
+	assert.Len(t, args, 1)
 
 	condition := args[0].(*nodes.VertexTermNode).Conditions.(*nodes.BinaryNode)
 	assert.Equal(t, lexer.TokenEqual, condition.Operator.Type)
 	assert.Equal(t, "name", condition.LeftChild.(*nodes.PropertyNode).PropertyName.Value)
 	assert.Equal(t, "John", condition.RightChild.(*nodes.StringNode).Value)
 }
-

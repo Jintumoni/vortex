@@ -59,8 +59,8 @@ type VertexNode struct {
 }
 
 type RelationNode struct {
-	Edge ASTNode
-	Vertex   ASTNode
+	Edge   ASTNode
+	Vertex ASTNode
 }
 
 type ConditionNode struct {
@@ -84,8 +84,8 @@ type PropertyNode struct {
 }
 
 type PropertyDefNode struct {
-	PropertyName *StringNode     `json:"property_name"`
-	PropertyType lexer.Token  `json:"property_type"`
+	PropertyName *StringNode `json:"property_name"`
+	PropertyType lexer.Token `json:"property_type"`
 }
 
 type PropertyInitNode struct {

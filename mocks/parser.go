@@ -6,14 +6,14 @@ import (
 )
 
 type MockParser struct {
-  mock.Mock
+	mock.Mock
 }
 
 func (m *MockParser) PropertyDef() *nodes.ASTNode {
-  args := m.Called()
-  return args.Get(0).(*nodes.ASTNode)
+	args := m.Called()
+	return args.Get(0).(*nodes.ASTNode)
 }
 
 func (m *MockParser) eat() {
-  m.Called()
+	m.Called()
 }

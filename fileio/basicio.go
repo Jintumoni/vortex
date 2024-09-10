@@ -14,7 +14,7 @@ import (
 )
 
 var (
-  KeyNotFound = errors.New("The key does not exist")
+	KeyNotFound = errors.New("The key does not exist")
 )
 
 func WriteToFile(path string, content io.Reader) error {
@@ -27,7 +27,7 @@ func WriteToFile(path string, content io.Reader) error {
 	if err != nil {
 		return err
 	}
-  bytes = append(bytes, '\n')
+	bytes = append(bytes, '\n')
 
 	_, err = file.Write(bytes)
 	return err
@@ -42,29 +42,29 @@ func ReadFromFile(path string) (io.Reader, error) {
 }
 
 func FindSchemaById(key string) (*nodes.SchemaDefNode, error) {
-  data, err := os.ReadFile(config.SchemaDefPath)
-  if err != nil {
-    return nil, err
-  }
+	data, err := os.ReadFile(config.SchemaDefPath)
+	if err != nil {
+		return nil, err
+	}
 
-  log.Println(data)
-  lines := bytes.Split(data, []byte{'\n'})
-  log.Println(lines)
-  for _, line := range lines {
-    log.Println(string(line))
-    var schemaDef *nodes.SchemaDefNode
-    if err := json.Unmarshal(line, &schemaDef); err != nil {
-      log.Println(string(line), "---------------")
-      return nil, err
-    }
-    log.Println(schemaDef, "------")
+	log.Println(data)
+	lines := bytes.Split(data, []byte{'\n'})
+	log.Println(lines)
+	for _, line := range lines {
+		log.Println(string(line))
+		var schemaDef *nodes.SchemaDefNode
+		if err := json.Unmarshal(line, &schemaDef); err != nil {
+			log.Println(string(line), "---------------")
+			return nil, err
+		}
+		log.Println(schemaDef, "------")
 
-    if schemaDef.SchemaName == key {
-      log.Println(*schemaDef)
-      return schemaDef, nil
-    }
+		if schemaDef.SchemaName.Value == key {
+			log.Println(*schemaDef)
+			return schemaDef, nil
+		}
 
-  }
+	}
 
-  return nil, KeyNotFound
+	return nil, KeyNotFound
 }

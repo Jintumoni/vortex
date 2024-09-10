@@ -2,8 +2,8 @@ package nodes
 
 type Visitor interface {
 	VisitProgramNode(node *ProgramStatementNode)
-  VisitIntNode(node *IntNode)
-  VisitStringNode(node *StringNode)
+	VisitIntNode(node *IntNode)
+	VisitStringNode(node *StringNode)
 	VisitSchemaDefNode(node *SchemaDefNode)
 	VisitEdgeDefNode(node *EdgeDefNode)
 	VisitRelationInitNode(node *RelationInitNode)
@@ -17,5 +17,5 @@ type Visitor interface {
 	VisitVertexTermNode(node *VertexTermNode)
 	VisitRelationNode(node *RelationNode)
 	VisitQueryStatement(node *QueryStatementNode)
-  VisitSumFunc(node *SumFuncNode)
+	VisitSumFunc(node *SumFuncNode)
 }

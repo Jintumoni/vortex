@@ -11,9 +11,9 @@ import (
 )
 
 func main() {
-  appManager := manager.NewAppManager()
+	appManager := manager.NewAppManager()
 
-  input := `Schema Person {
+	input := `Schema Person {
     name string
     age int
   }
@@ -38,10 +38,10 @@ func main() {
   })
   `
 
-  lexer := lexer.NewLexer(strings.NewReader(input))
-  parser := parser.NewParser(lexer)
-  executor := executor.NewExecutor(appManager, parser)
-  if err := executor.Execute(); err != nil {
-    log.Fatal(err)
-  }
+	lexer := lexer.NewLexer(strings.NewReader(input))
+	parser := parser.NewParser(lexer)
+	executor := executor.NewExecutor(appManager, parser)
+	if err := executor.Execute(); err != nil {
+		log.Fatal(err)
+	}
 }

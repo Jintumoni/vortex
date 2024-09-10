@@ -4,12 +4,11 @@ import (
 	"bytes"
 	// "encoding/json"
 	// "log"
-
 	// "github.com/Jintumoni/vortex/nodes"
 )
 
 type DDLRunner struct {
-  buffer *bytes.Buffer
+	buffer *bytes.Buffer
 }
 
 // func (t *DDLRunner) VisitSchemaDefNode(node *nodes.SchemaDefNode) {
@@ -27,7 +26,6 @@ type DDLRunner struct {
 // }
 
 // func (t *DDLRunner) VisitEdgeDefNode(node *nodes.EdgeDefNode) {
-
 
 // }
 

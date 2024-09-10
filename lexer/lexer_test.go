@@ -136,7 +136,7 @@ func TestGetNextToken(t *testing.T) {
 		{TokenIntegerConstant, "100"},
 		{TokenRCB, "}"},
 		{TokenRCB, "}"},
-    {TokenEOF, "EOF"},
+		{TokenEOF, "EOF"},
 	}
 
 	for _, e := range expected {
@@ -185,7 +185,7 @@ func TestGetNextTokenWithRangeExpression(t *testing.T) {
 		{TokenIntegerConstant, "100"},
 		{TokenRCB, "}"},
 		{TokenRCB, "}"},
-    {TokenEOF, "EOF"},
+		{TokenEOF, "EOF"},
 	}
 
 	for _, e := range expected {
@@ -238,7 +238,7 @@ func TestGetNextTokenWithAlias(t *testing.T) {
 		{TokenIdentifier, "salary"},
 		{TokenRCB, "}"},
 		{TokenRCB, "}"},
-    {TokenEOF, "EOF"},
+		{TokenEOF, "EOF"},
 	}
 
 	for _, e := range expected {
@@ -267,8 +267,8 @@ func TestGetNextTokenWithFunctions(t *testing.T) {
 		{TokenAlias, "as"},
 		{TokenIdentifier, "A"},
 		{TokenLCB, "{"},
-    {TokenFunction, "Sum"},
-    {TokenLRB, "("},
+		{TokenFunction, "Sum"},
+		{TokenLRB, "("},
 		{TokenIdentifier, "FriendsWith"},
 		{TokenIdentifier, "Person"},
 		{TokenLCB, "{"},
@@ -292,12 +292,12 @@ func TestGetNextTokenWithFunctions(t *testing.T) {
 		{TokenDot, "."},
 		{TokenIdentifier, "salary"},
 		{TokenRCB, "}"},
-    {TokenComma, ","},
+		{TokenComma, ","},
 		{TokenDot, "."},
 		{TokenIdentifier, "salary"},
-    {TokenRRB, ")"},
+		{TokenRRB, ")"},
 		{TokenRCB, "}"},
-    {TokenEOF, "EOF"},
+		{TokenEOF, "EOF"},
 	}
 
 	for _, e := range expected {
@@ -307,9 +307,9 @@ func TestGetNextTokenWithFunctions(t *testing.T) {
 	}
 }
 
-func  TestUnknownToken(t *testing.T) {
-  mockData := ";~"
+func TestUnknownToken(t *testing.T) {
+	mockData := ";~"
 	l := NewLexer(strings.NewReader(mockData))
-  token := l.GetNextToken()
-  assert.Equal(t, token.Type, TokenInvalid)
+	token := l.GetNextToken()
+	assert.Equal(t, token.Type, TokenInvalid)
 }

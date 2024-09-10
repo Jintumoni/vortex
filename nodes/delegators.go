@@ -37,33 +37,33 @@ func (node *IntNode) Accept(visitor Visitor) {
 }
 
 func (node *EdgeNode) Accept(visitor Visitor) {
-  visitor.VisitEdgeNode(node)
+	visitor.VisitEdgeNode(node)
 }
 
 func (node *PropertyNode) Accept(visitor Visitor) {
-  visitor.VisitPropertyNode(node)
+	visitor.VisitPropertyNode(node)
 }
 
 func (node *BinaryNode) Accept(visitor Visitor) {
-  visitor.VisitBinaryNode(node)
+	visitor.VisitBinaryNode(node)
 }
 
 func (node *VertexNode) Accept(visitor Visitor) {
-  visitor.VisitVertexNode(node)
+	visitor.VisitVertexNode(node)
 }
 
 func (node *VertexTermNode) Accept(visitor Visitor) {
-  visitor.VisitVertexTermNode(node)
+	visitor.VisitVertexTermNode(node)
 }
 
 func (node *RelationNode) Accept(visitor Visitor) {
-  visitor.VisitRelationNode(node)
+	visitor.VisitRelationNode(node)
 }
 
 func (node *QueryStatementNode) Accept(visitor Visitor) {
-  visitor.VisitQueryStatement(node)
+	visitor.VisitQueryStatement(node)
 }
 
 func (node *SumFuncNode) Accept(visitor Visitor) {
-  visitor.VisitSumFunc(node)
+	visitor.VisitSumFunc(node)
 }

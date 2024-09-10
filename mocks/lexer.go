@@ -13,4 +13,3 @@ func (m *MockLexer) GetNextToken() *lexer.Token {
 	args := m.Called()
 	return args.Get(0).(*lexer.Token)
 }
-

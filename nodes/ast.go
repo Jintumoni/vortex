@@ -3,17 +3,17 @@ package nodes
 type EdgeType int
 
 const (
-  OneWayEdge EdgeType = iota
-  TwoWayEdge
+	OneWayEdge EdgeType = iota
+	TwoWayEdge
 )
 
 type FuncType int
 
 const (
-  SumFunc FuncType = iota
-  MaxFunc
-  MinFunc
-  StartWithFunc
+	SumFunc FuncType = iota
+	MaxFunc
+	MinFunc
+	StartWithFunc
 )
 
 type ASTNode interface {
@@ -22,6 +22,5 @@ type ASTNode interface {
 }
 
 type BuiltinFuncNode interface {
-  Apply(args ...ASTNode) ASTNode
+	Apply(args ...ASTNode) ASTNode
 }
-
