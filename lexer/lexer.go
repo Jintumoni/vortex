@@ -44,6 +44,18 @@ func (l *Lexer) advance() {
 	l.Index++
 }
 
+// Use this method only for single line tokens
+// Use the Token{} struct directly for multiline tokens
+func (l *Lexer) addSLToken(token TokenType, value string) *Token {
+  return &Token{
+    Type: token,
+    Value: value,
+    Row: l.Row,
+    Col: l.Col - len(value),
+    Span: len(value),
+  }
+}
+
 func (l *Lexer) ignoreSpace() {
 	for l.Index < len(l.Input) && unicode.IsSpace(rune(l.Input[l.Index])) {
 		l.advance()
@@ -52,23 +64,25 @@ func (l *Lexer) ignoreSpace() {
 
 func (l *Lexer) getNumberToken() *Token {
 	if !unicode.IsNumber(rune(l.Input[l.Index])) {
-		return &Token{TokenInvalid, "INVALID"}
+		return l.addSLToken(TokenInvalid, "INVALID")
 	}
 
+	row, col := l.Row, l.Col
 	buffer := bytes.Buffer{}
 	for l.Index < len(l.Input) && unicode.IsNumber(rune(l.Input[l.Index])) {
 		buffer.WriteByte(l.Input[l.Index])
 		l.advance()
 	}
 
-	return &Token{TokenIntegerConstant, buffer.String()}
+	return &Token{TokenIntegerConstant, buffer.String(), row, col, buffer.Len()}
 }
 
 func (l *Lexer) getIDToken() *Token {
 	if !unicode.IsLetter(rune(l.Input[l.Index])) {
-		return &Token{TokenInvalid, "INVALID"}
+		return &Token{TokenInvalid, "INVALID", l.Row, l.Col, 1}
 	}
 
+	row, col := l.Row, l.Col
 	buffer := bytes.Buffer{}
 	for l.Index < len(l.Input) {
 		if unicode.IsLetter(rune(l.Input[l.Index])) || unicode.IsNumber(rune(l.Input[l.Index])) {
@@ -81,38 +95,39 @@ func (l *Lexer) getIDToken() *Token {
 
 	tokenType, ok := ReservedKeywords[buffer.String()]
 	if ok {
-		return &Token{tokenType, buffer.String()}
+		return &Token{tokenType, buffer.String(), row, col, buffer.Len()}
 	}
 
-	return &Token{TokenIdentifier, buffer.String()}
+	return &Token{TokenIdentifier, buffer.String(), row, col, buffer.Len()}
 }
 
 func (l *Lexer) getStringToken() *Token {
 	buffer := bytes.Buffer{}
 
 	if l.Input[l.Index] != '"' {
-		return &Token{TokenInvalid, "INVALID"}
+		return l.addSLToken(TokenInvalid, "INVALID")
 	}
 	l.advance()
 
+	row, col := l.Row, l.Col
 	for l.Index < len(l.Input) && l.Input[l.Index] != '"' {
 		buffer.WriteByte(l.Input[l.Index])
 		l.advance()
 	}
 
 	if l.Index >= len(l.Input) || l.Input[l.Index] != '"' {
-		return &Token{TokenInvalid, "INVALID"}
+		return l.addSLToken(TokenInvalid, "INVALID")
 	}
 	l.advance()
 
-	return &Token{TokenStringConstant, buffer.String()}
+	return &Token{TokenStringConstant, buffer.String(), row, col, buffer.Len()}
 }
 
 func (l *Lexer) GetNextToken() *Token {
 	l.ignoreSpace()
 
 	if l.Index >= len(l.Input) {
-		return &Token{TokenEOF, "EOF"}
+		return l.addSLToken(TokenEOF, "EOF")
 	}
 
 	if unicode.IsLetter(rune(l.Input[l.Index])) {
@@ -124,71 +139,71 @@ func (l *Lexer) GetNextToken() *Token {
 	switch l.Input[l.Index] {
 	case '+':
 		l.advance()
-		return &Token{TokenPlus, "+"}
+		return l.addSLToken(TokenPlus, "+")
 	case '-':
 		l.advance()
-		return &Token{TokenMinus, "-"}
+		return l.addSLToken(TokenMinus, "-")
 	case '*':
 		l.advance()
-		return &Token{TokenMultiply, "*"}
+		return l.addSLToken(TokenMultiply, "*")
 	case '/':
 		l.advance()
-		return &Token{TokenDivide, "/"}
+		return l.addSLToken(TokenDivide, "/")
 	case ',':
 		l.advance()
-		return &Token{TokenComma, ","}
+		return l.addSLToken(TokenComma, ",")
 	case '{':
 		l.advance()
-		return &Token{TokenLCB, "{"}
+		return l.addSLToken(TokenLCB, "{")
 	case '}':
 		l.advance()
-		return &Token{TokenRCB, "}"}
+		return l.addSLToken(TokenRCB, "}")
 	case '(':
 		l.advance()
-		return &Token{TokenLRB, "("}
+		return l.addSLToken(TokenLRB, "(")
 	case ')':
 		l.advance()
-		return &Token{TokenRRB, ")"}
+		return l.addSLToken(TokenRRB, ")")
 	case '[':
 		l.advance()
-		return &Token{TokenLSB, "["}
+		return l.addSLToken(TokenLSB, "[")
 	case ']':
 		l.advance()
-		return &Token{TokenRSB, "]"}
+		return l.addSLToken(TokenRSB, "]")
 	case '.':
 		if l.Peek() == '.' {
 			l.advance()
 			l.advance()
-			return &Token{TokenRange, ".."}
+			return l.addSLToken(TokenRange, "..")
 		} else {
 			l.advance()
-			return &Token{TokenDot, "."}
+			return l.addSLToken(TokenDot, ".")
 		}
 	case '<':
 		if l.Peek() == '=' {
 			l.advance()
 			l.advance()
-			return &Token{TokenLessThanEqual, "<="}
+			return l.addSLToken(TokenLessThanEqual, "<=")
 		} else {
 			l.advance()
-			return &Token{TokenLessThan, "<"}
+			return l.addSLToken(TokenLessThan, "<")
 		}
 	case '>':
 		if l.Peek() == '=' {
 			l.advance()
 			l.advance()
-			return &Token{TokenGreaterThanEqual, ">="}
+			return l.addSLToken(TokenGreaterThanEqual, ">=")
 		} else {
 			l.advance()
-			return &Token{TokenGreaterThan, ">"}
+			return l.addSLToken(TokenGreaterThan, ">")
 		}
 	case '=':
 		l.advance()
-		return &Token{TokenEqual, "="}
+		return l.addSLToken(TokenEqual, "=")
 	case '"':
 		return l.getStringToken()
 	default:
 		l.advance()
-		return &Token{TokenInvalid, "INVALID"}
+		return l.addSLToken(TokenInvalid, "INVALID")
 	}
 }
