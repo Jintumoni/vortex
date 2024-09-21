@@ -313,3 +313,44 @@ func TestUnknownToken(t *testing.T) {
 	token := l.GetNextToken()
 	assert.Equal(t, token.Type, TokenInvalid)
 }
+
+func TestAddToken(t *testing.T) {
+	mockData := "+"
+	l := NewLexer(strings.NewReader(mockData))
+	l.GetNextToken()
+	token := l.addSLToken(TokenPlus, "+")
+	assert.Equal(t, TokenPlus, token.Type)
+	assert.Equal(t, "+", token.Value)
+	assert.Equal(t, 0, token.Row)
+	assert.Equal(t, 0, token.Col)
+	assert.Equal(t, 1, token.Span)
+}
+
+func TestMultilineToken(t *testing.T) {
+	mockData := `"this is a sample
+  multiline string"`
+	l := NewLexer(strings.NewReader(mockData))
+	token := l.GetNextToken()
+	assert.Equal(t, TokenStringConstant, token.Type)
+	assert.Equal(t, `this is a sample
+  multiline string`, token.Value)
+	assert.Equal(t, 0, token.Row)
+	assert.Equal(t, 1, token.Col)
+	assert.Equal(t, len(mockData)-2, token.Span)
+}
+
+func TestGetSourceContext(t *testing.T) {
+	mockData := `Person as A {
+    Sum(FriendsWith Person {
+      LivesIn[2..] Country{.name="India"}
+      and .salary >= A.salary`
+	l := NewLexer(strings.NewReader(mockData))
+	l.Row = 3
+	source := l.GetSourceContext()
+
+  // Tabs characters are present
+	assert.Equal(t, `2	|	    Sum(FriendsWith Person {
+3	|	      LivesIn[2..] Country{.name="India"}
+4	|	      and .salary >= A.salary
+`, source)
+}

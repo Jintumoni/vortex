@@ -13,3 +13,8 @@ func (m *MockLexer) GetNextToken() *lexer.Token {
 	args := m.Called()
 	return args.Get(0).(*lexer.Token)
 }
+
+func (m *MockLexer) GetSourceContext() string {
+	args := m.Called()
+	return args.Get(0).(string)
+}
