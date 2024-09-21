@@ -12,6 +12,8 @@ type LexerInterface interface {
 
 type Lexer struct {
 	Index        int
+	Row          int
+	Col          int
 	CurrentToken *Token
 	Input        []byte
 }
@@ -34,6 +36,11 @@ func (l *Lexer) Peek() byte {
 }
 
 func (l *Lexer) advance() {
+	l.Col++
+	if l.Input[l.Index] == '\n' {
+		l.Row++
+		l.Col = 0
+	}
 	l.Index++
 }
 

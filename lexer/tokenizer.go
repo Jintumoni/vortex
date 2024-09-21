@@ -61,4 +61,7 @@ var ReservedKeywords = map[string]TokenType{
 type Token struct {
 	Type  TokenType
 	Value string
+	Row   int
+	Col   int
+	Span  int // stride of the token
 }
