@@ -2,12 +2,15 @@ package lexer
 
 import (
 	"bytes"
+	"fmt"
 	"io"
+	"strings"
 	"unicode"
 )
 
 type LexerInterface interface {
 	GetNextToken() *Token
+	GetSourceContext() string
 }
 
 type Lexer struct {
@@ -206,4 +209,19 @@ func (l *Lexer) GetNextToken() *Token {
 		l.advance()
 		return l.addSLToken(TokenInvalid, "INVALID")
 	}
+}
+
+func (l *Lexer) GetSourceContext() string {
+	lines := strings.Split(string(l.Input), "\n")
+	source := new(bytes.Buffer)
+
+	i := max(0, l.Row-2)
+	for i <= l.Row {
+		source.WriteString(fmt.Sprintf("%d\t|\t", i+1))
+		source.WriteString(lines[i])
+		source.WriteString("\n")
+		i++
+	}
+
+	return source.String()
 }
