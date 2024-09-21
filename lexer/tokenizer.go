@@ -140,3 +140,13 @@ type Token struct {
 	Col   int
 	Span  int // stride of the token
 }
+
+func GetAllStatementTypes() []TokenType {
+	return []TokenType{
+		TokenSchema,
+		TokenVertex,
+		TokenEdge,
+		TokenRelation,
+		TokenQuery,
+	}
+}
