@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	"github.com/Jintumoni/vortex/errors"
 	"github.com/Jintumoni/vortex/lexer"
 	"github.com/Jintumoni/vortex/mocks"
 	"github.com/Jintumoni/vortex/nodes"
@@ -356,8 +357,7 @@ func TestFactorRelationNoBounds(t *testing.T) {
 	mockLexer := new(mocks.MockLexer)
 
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenLSB, Value: "["}).Once()
-	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenDot, Value: "."}).Once()
-	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenDot, Value: "."}).Once()
+	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenRange, Value: ".."}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenRSB, Value: "]"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIdentifier, Value: "LivesIn"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIdentifier, Value: "India"}).Once()
@@ -380,8 +380,7 @@ func TestFactorRelationOnlyLowerBound(t *testing.T) {
 
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenLSB, Value: "["}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIntegerConstant, Value: "2"}).Once()
-	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenDot, Value: "."}).Once()
-	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenDot, Value: "."}).Once()
+	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenRange, Value: ".."}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenRSB, Value: "]"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIdentifier, Value: "LivesIn"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIdentifier, Value: "India"}).Once()
@@ -403,8 +402,7 @@ func TestFactorRelationOnlyUpperBound(t *testing.T) {
 	mockLexer := new(mocks.MockLexer)
 
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenLSB, Value: "["}).Once()
-	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenDot, Value: "."}).Once()
-	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenDot, Value: "."}).Once()
+	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenRange, Value: ".."}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIntegerConstant, Value: "2"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenRSB, Value: "]"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIdentifier, Value: "LivesIn"}).Once()
@@ -428,8 +426,7 @@ func TestFactorRelationBothLowerAndUpperBound(t *testing.T) {
 
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenLSB, Value: "["}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIntegerConstant, Value: "2"}).Once()
-	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenDot, Value: "."}).Once()
-	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenDot, Value: "."}).Once()
+	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenRange, Value: ".."}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIntegerConstant, Value: "4"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenRSB, Value: "]"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIdentifier, Value: "LivesIn"}).Once()
@@ -453,8 +450,7 @@ func TestFactorRelationWithAnyEdge(t *testing.T) {
 
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenLSB, Value: "["}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIntegerConstant, Value: "2"}).Once()
-	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenDot, Value: "."}).Once()
-	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenDot, Value: "."}).Once()
+	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenRange, Value: ".."}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIntegerConstant, Value: "4"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenRSB, Value: "]"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenLRB, Value: "("}).Once()
@@ -479,8 +475,7 @@ func TestFactorRelationWithAnyEdgeAndAnyVertex(t *testing.T) {
 
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenLSB, Value: "["}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIntegerConstant, Value: "2"}).Once()
-	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenDot, Value: "."}).Once()
-	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenDot, Value: "."}).Once()
+	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenRange, Value: ".."}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIntegerConstant, Value: "4"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenRSB, Value: "]"}).Once()
 	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenLRB, Value: "("}).Once()
@@ -629,4 +624,30 @@ func TestFactorWithBuiltinFunction(t *testing.T) {
 	assert.Equal(t, lexer.TokenEqual, condition.Operator.Type)
 	assert.Equal(t, "name", condition.LeftChild.(*nodes.PropertyNode).PropertyName.Value)
 	assert.Equal(t, "John", condition.RightChild.(*nodes.StringNode).Value)
+}
+
+func TestUnexpectedTokenErrorMessage(t *testing.T) {
+  mockLexer := new(mocks.MockLexer)
+  // Query Person as {
+  mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenQuery, Value: "Query", Row: 0, Col: 0, Span: 5}).Once()
+  mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenIdentifier, Value: "Person", Row: 0, Col: 7, Span: 6}).Once()
+  mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenAlias, Value: "as", Row: 0, Col: 14, Span: 2}).Once()
+  mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenLCB, Value: "{", Row: 0, Col: 18, Span: 1}).Once()
+	mockLexer.On("GetNextToken").Return(&lexer.Token{Type: lexer.TokenEOF, Value: "EOF"}).Once()
+
+  // There are tab characters in the string
+  expectedErrMsg := `Error: Unexpected "{" found
+1	|	Query  Person as  {
+		                  ^--Did you mean "<identifier>"?
+`
+  mockLexer.On("GetSourceContext").Return("1	|	Query  Person as  {\n").Once()
+
+  p := NewParser(mockLexer)
+  node, err := p.Parse()
+
+  assert.Nil(t, node)
+
+  var expectedErr *errors.UnexpectedToken
+  assert.ErrorAs(t, err, &expectedErr)
+  assert.Equal(t, expectedErrMsg, err.Error())
 }

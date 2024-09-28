@@ -1,19 +1,13 @@
 package parser
 
 import (
-	"errors"
 	"math"
 	"strconv"
 
+	"github.com/Jintumoni/vortex/errors"
+
 	"github.com/Jintumoni/vortex/lexer"
 	"github.com/Jintumoni/vortex/nodes"
-)
-
-var (
-	UnexpectedToken    = errors.New("Unexpected token received")
-	UnknownEdgeType    = errors.New("Unknown edge type")
-	UnknownStatment    = errors.New("Unknown statement found")
-	UnknownBuiltinFunc = errors.New("Unknown function received")
 )
 
 type ParserInterface interface {
@@ -41,7 +35,11 @@ func NewParser(lexer lexer.LexerInterface) *Parser {
 
 func (p *Parser) eat(tokenType lexer.TokenType) error {
 	if tokenType != p.CurrentToken.Type {
-		return UnexpectedToken
+		return &errors.UnexpectedToken{
+			SourceContext: p.Lexer.GetSourceContext(),
+			ActualToken:   p.CurrentToken,
+			ExpectedToken: tokenType,
+		}
 	}
 	p.CurrentToken = p.Lexer.GetNextToken()
 	return nil
@@ -66,7 +64,10 @@ func (p *Parser) edgeDef() (nodes.ASTNode, error) {
 	} else if leftToken.Value == "TwoWay" {
 		edgeType = nodes.TwoWayEdge
 	} else {
-		return new(nodes.EdgeDefNode), UnknownEdgeType
+		return new(nodes.EdgeDefNode), &errors.UnknownEdgeType{
+			SourceContext: p.Lexer.GetSourceContext(),
+			ActualToken:   p.CurrentToken,
+		}
 	}
 	if err := p.eat(lexer.TokenIdentifier); err != nil {
 		return new(nodes.EdgeDefNode), err
@@ -130,7 +131,12 @@ func (p *Parser) propertyDef() ([]nodes.ASTNode, error) {
 				return nil, err
 			}
 		} else {
-			return nil, UnexpectedToken
+			return nil, &errors.UnexpectedToken{
+				SourceContext:   p.Lexer.GetSourceContext(),
+				ActualToken:     p.CurrentToken,
+				SuggestedTokens: []lexer.TokenType{lexer.TokenInteger, lexer.TokenString},
+			}
+
 		}
 
 		properties = append(properties, &nodes.PropertyDefNode{
@@ -169,7 +175,11 @@ func (p *Parser) propertyInit() ([]nodes.ASTNode, error) {
 				return nil, err
 			}
 		default:
-			return nil, UnexpectedToken
+			return nil, &errors.UnexpectedToken{
+				SourceContext:   p.Lexer.GetSourceContext(),
+				ActualToken:     p.CurrentToken,
+				SuggestedTokens: []lexer.TokenType{lexer.TokenIntegerConstant, lexer.TokenStringConstant},
+			}
 		}
 
 		arguments = append(arguments, &nodes.PropertyInitNode{
@@ -291,7 +301,7 @@ func (p *Parser) programStatement() (nodes.ASTNode, error) {
 			}
 			programNodes = append(programNodes, queryNode)
 		default:
-			return nil, UnknownStatment
+			return nil, &errors.UnknownStatement{SourceContext: p.Lexer.GetSourceContext(), ActualToken: p.CurrentToken}
 		}
 	}
 	return &nodes.ProgramStatementNode{Children: programNodes}, nil
@@ -404,16 +414,20 @@ func (p *Parser) string() (nodes.ASTNode, error) {
 
 func (p *Parser) builtinFunc() (nodes.ASTNode, error) {
 	if p.CurrentToken.Type != lexer.TokenFunction {
-		return nil, UnexpectedToken
+		return nil, &errors.UnexpectedToken{
+			SourceContext: p.Lexer.GetSourceContext(),
+			ActualToken:   p.CurrentToken,
+			ExpectedToken: lexer.TokenFunction,
+		}
 	}
 
-	function := p.CurrentToken.Value
+	function := p.CurrentToken
 
 	if err := p.eat(lexer.TokenFunction); err != nil {
 		return nil, err
 	}
 
-	switch function {
+	switch function.Value {
 	case "Sum":
 		expression, err := p.expression()
 		if err != nil {
@@ -426,7 +440,7 @@ func (p *Parser) builtinFunc() (nodes.ASTNode, error) {
 		}
 		return &nodes.SumFuncNode{FunctionName: nodes.SumFunc, Args: args}, nil
 	default:
-		return nil, UnknownBuiltinFunc
+		return nil, &errors.UnknownBuiltinFunc{SourceContext: p.Lexer.GetSourceContext(), ActualToken: p.CurrentToken}
 	}
 }
 
@@ -560,7 +574,19 @@ func (p *Parser) factor() (nodes.ASTNode, error) {
 		return p.vertexTerm()
 	}
 
-	return nil, UnexpectedToken
+	return nil, &errors.UnexpectedToken{
+		SourceContext: p.Lexer.GetSourceContext(),
+		ActualToken:   p.CurrentToken,
+		SuggestedTokens: []lexer.TokenType{
+			lexer.TokenLRB,
+			lexer.TokenFunction,
+			lexer.TokenEdge,
+			lexer.TokenIntegerConstant,
+			lexer.TokenStringConstant,
+			lexer.TokenDot,
+			lexer.TokenIdentifier,
+		},
+	}
 }
 
 // term:
@@ -653,13 +679,10 @@ func (p *Parser) relationTerm() (nodes.ASTNode, error) {
 
 		}
 		// DOT DOT
-		if p.CurrentToken.Type == lexer.TokenDot {
+		if p.CurrentToken.Type == lexer.TokenRange {
 			relation.UpperBound = &nodes.IntNode{Value: math.MaxInt}
 
-			if err := p.eat(lexer.TokenDot); err != nil {
-				return nil, err
-			}
-			if err := p.eat(lexer.TokenDot); err != nil {
+			if err := p.eat(lexer.TokenRange); err != nil {
 				return nil, err
 			}
 
@@ -700,7 +723,12 @@ func (p *Parser) relationTerm() (nodes.ASTNode, error) {
 		}
 		relation.EdgeName = nil
 	} else {
-		return nil, UnexpectedToken
+    panic(p.CurrentToken)
+		return nil, &errors.UnexpectedToken{
+			SourceContext:   p.Lexer.GetSourceContext(),
+			ActualToken:     p.CurrentToken,
+			SuggestedTokens: []lexer.TokenType{lexer.TokenIdentifier, lexer.TokenLRB},
+		}
 	}
 
 	return relation, nil
@@ -734,7 +762,11 @@ func (p *Parser) vertexTerm() (nodes.ASTNode, error) {
 		}
 		vertex.VertexName = nil
 	} else {
-		return nil, UnexpectedToken
+		return nil, &errors.UnexpectedToken{
+			SourceContext:   p.Lexer.GetSourceContext(),
+			ActualToken:     p.CurrentToken,
+			SuggestedTokens: []lexer.TokenType{lexer.TokenIdentifier, lexer.TokenLRB},
+		}
 	}
 
 	// (LCB expression RCB)?
