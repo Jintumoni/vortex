@@ -16,7 +16,7 @@ type Equality interface {
 }
 
 type Comparison interface {
-	LessThan(other Equality) (bool, error)
+	LessThan(other Comparison) (bool, error)
 }
 
 type Logical interface {

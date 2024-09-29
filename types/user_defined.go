@@ -9,6 +9,10 @@ type UserDefinedType struct {
 	Properties map[string]BaseType
 }
 
+func NewUserDefined(typeName string, properties map[string]BaseType) *UserDefinedType {
+  return &UserDefinedType{typeName, properties}
+}
+
 func (u *UserDefinedType) GetProperty(name string) (BaseType, error) {
 	p, ok := u.Properties[name]
 	if !ok {
@@ -30,16 +34,16 @@ func (u *UserDefinedType) Equal(other Equality) (bool, error) {
 		}
 
 		switch v.(type) {
-		case IntType:
-			if b, err := v.(*IntType).Equal(otherProp.(*IntType)); err != nil && !b {
+		case *IntType:
+			if b, err := v.(*IntType).Equal(otherProp.(Equality)); err != nil || !b {
 				return false, err
 			}
-		case BoolType:
-			if b, err := v.(*BoolType).Equal(otherProp.(*BoolType)); err != nil && !b {
+		case *BoolType:
+			if b, err := v.(*BoolType).Equal(otherProp.(Equality)); err != nil || !b {
 				return false, err
 			}
-		case UserDefinedType:
-			if b, err := v.(*UserDefinedType).LessThan(otherProp.(*UserDefinedType)); err != nil && !b {
+		case *UserDefinedType:
+			if b, err := v.(*UserDefinedType).Equal(otherProp.(Equality)); err != nil || !b {
 				return false, err
 			}
 		default:
@@ -50,7 +54,7 @@ func (u *UserDefinedType) Equal(other Equality) (bool, error) {
 	return true, nil
 }
 
-func (u *UserDefinedType) LessThan(other Equality) (bool, error) {
+func (u *UserDefinedType) LessThan(other Comparison) (bool, error) {
 	o, ok := other.(*UserDefinedType)
 	if !ok || u.TypeName != o.TypeName {
 		return false, errors.InvalidOperation
@@ -61,12 +65,12 @@ func (u *UserDefinedType) LessThan(other Equality) (bool, error) {
 			return false, err
 		}
 		switch v.(type) {
-		case IntType:
-			if b, err := v.(*IntType).LessThan(otherProp.(*IntType)); err != nil && !b {
+		case *IntType:
+			if b, err := v.(*IntType).LessThan(otherProp.(Comparison)); err != nil || !b {
 				return false, err
 			}
-		case UserDefinedType:
-			if b, err := v.(*UserDefinedType).LessThan(otherProp.(*UserDefinedType)); err != nil && !b {
+		case *UserDefinedType:
+			if b, err := v.(*UserDefinedType).LessThan(otherProp.(Comparison)); err != nil || !b {
 				return false, err
 			}
 		default:
