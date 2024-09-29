@@ -64,7 +64,7 @@ func (i *IntType) Or(other Logical) (Logical, error) {
 	return i, nil
 }
 
-func (i *IntType) LessThan(other Equality) (bool, error) {
+func (i *IntType) LessThan(other Comparison) (bool, error) {
 	o, ok := other.(*IntType)
 	if !ok {
 
