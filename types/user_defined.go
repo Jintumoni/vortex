@@ -1,6 +1,9 @@
 package types
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/Jintumoni/vortex/errors"
 )
 
@@ -33,22 +36,9 @@ func (u *UserDefinedType) Equal(other Equality) (bool, error) {
 			return false, err
 		}
 
-		switch v.(type) {
-		case *IntType:
-			if b, err := v.(*IntType).Equal(otherProp.(Equality)); err != nil || !b {
-				return false, err
-			}
-		case *BoolType:
-			if b, err := v.(*BoolType).Equal(otherProp.(Equality)); err != nil || !b {
-				return false, err
-			}
-		case *UserDefinedType:
-			if b, err := v.(*UserDefinedType).Equal(otherProp.(Equality)); err != nil || !b {
-				return false, err
-			}
-		default:
-			return false, errors.UnknownType
-		}
+    if b, err := v.Equal(otherProp.(Equality)); err != nil || !b {
+      return false, err
+    }
 	}
 
 	return true, nil
@@ -64,21 +54,23 @@ func (u *UserDefinedType) LessThan(other Comparison) (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		switch v.(type) {
-		case *IntType:
-			if b, err := v.(*IntType).LessThan(otherProp.(Comparison)); err != nil || !b {
-				return false, err
-			}
-		case *UserDefinedType:
-			if b, err := v.(*UserDefinedType).LessThan(otherProp.(Comparison)); err != nil || !b {
-				return false, err
-			}
-		default:
-			return false, errors.InvalidOperation
-		}
+    b, err := v.Equal(otherProp.(Equality))
+    if err != nil {
+      return false, nil
+    }
+
+    if b {
+      continue
+    }
+
+    b, err = v.LessThan(otherProp.(Comparison))
+    if err != nil {
+      return false, nil
+    }
+    return b, nil
 	}
 
-	return true, nil
+	return false, nil
 }
 
 func (u *UserDefinedType) Less(other *UserDefinedType) bool {
@@ -87,4 +79,9 @@ func (u *UserDefinedType) Less(other *UserDefinedType) bool {
 		return false
 	}
 	return r
+}
+
+func (u *UserDefinedType) Repr() string {
+  bytes, _ := json.Marshal(u)
+  return fmt.Sprintf("%v", string(bytes))
 }

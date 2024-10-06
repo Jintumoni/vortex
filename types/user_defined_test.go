@@ -53,7 +53,7 @@ func TestUserDefinedComparison(t *testing.T) {
 	person2 = NewUserDefined("Person", map[string]BaseType{"age": NewInt(20)})
 
 	res, err = person1.LessThan(person2)
-	assert.False(t, res)
+	assert.True(t, res)
 
 	person1 = NewUserDefined("Person", map[string]BaseType{"age": NewInt(20)})
 	person2 = NewUserDefined("Person", map[string]BaseType{"age": NewInt(10), "isEmployeed": NewBool(true)})
