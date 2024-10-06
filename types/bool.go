@@ -35,3 +35,20 @@ func (i *BoolType) Equal(other Equality) (bool, error) {
 
 	return i.Value == o.Value, nil
 }
+
+func (i *BoolType) LessThan(other Comparison) (bool, error) {
+	o, ok := other.(*BoolType)
+	if !ok {
+	}
+
+  res, err := i.Equal(o)
+  if res || err != nil {
+    return false, err
+  }
+
+  if i.Value {
+    return false, nil
+  }
+
+  return true, nil
+}

@@ -84,3 +84,33 @@ func TestBoolTypeRepr(t *testing.T) {
 
 	assert.Equal(t, "true", z)
 }
+
+func TestBoolLessThan(t *testing.T) {
+  x := NewBool(true)
+  y := NewBool(false)
+
+  z, err := x.LessThan(y)
+  assert.NoError(t, err)
+  assert.Equal(t, false, z)
+
+  x = NewBool(true)
+  y = NewBool(true)
+
+  z, err = x.LessThan(y)
+  assert.NoError(t, err)
+  assert.Equal(t, false, z)
+
+  x = NewBool(false)
+  y = NewBool(true)
+
+  z, err = x.LessThan(y)
+  assert.NoError(t, err)
+  assert.Equal(t, true, z)
+
+  x = NewBool(false)
+  y = NewBool(false)
+
+  z, err = x.LessThan(y)
+  assert.NoError(t, err)
+  assert.Equal(t, false, z)
+}
