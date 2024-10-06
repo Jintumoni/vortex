@@ -2,7 +2,11 @@ package types
 
 type DataType int
 
-type BaseType interface{}
+type BaseType interface{
+  Equality
+  Comparison
+  Representation
+}
 
 type Arithmetic interface {
 	Add(other Arithmetic) (Arithmetic, error)
