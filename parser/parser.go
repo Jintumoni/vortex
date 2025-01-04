@@ -42,6 +42,7 @@ func (p *Parser) eat(tokenType lexer.TokenType) error {
 		}
 	}
 	p.CurrentToken = p.Lexer.GetNextToken()
+	p.Lexer.Commit()
 	return nil
 }
 
@@ -412,8 +413,28 @@ func (p *Parser) string() (nodes.ASTNode, error) {
 	return &nodes.StringNode{Value: str}, nil
 }
 
-func (p *Parser) builtinFunc() (nodes.ASTNode, error) {
-	if p.CurrentToken.Type != lexer.TokenFunction {
+func (p *Parser) propertyId() (nodes.ASTNode, error) {
+	id := p.CurrentToken.Value
+	if err := p.eat(lexer.TokenIdentifier); err != nil {
+		return nil, err
+	}
+
+	// property_id (eg: A.name)
+	if err := p.eat(lexer.TokenDot); err != nil {
+		return nil, err
+	}
+	property := p.CurrentToken.Value
+	if err := p.eat(lexer.TokenIdentifier); err != nil {
+		return nil, err
+	}
+
+	return &nodes.PropertyNode{
+		PropertyName: &nodes.StringNode{Value: property}, Alias: &nodes.StringNode{Value: id},
+	}, nil
+}
+
+func (p *Parser) functionTerm() (nodes.ASTNode, error) {
+	if p.CurrentToken.Type != lexer.TokenIdentifier {
 		return nil, &errors.UnexpectedToken{
 			SourceContext: p.Lexer.GetSourceContext(),
 			ActualToken:   p.CurrentToken,
@@ -423,30 +444,48 @@ func (p *Parser) builtinFunc() (nodes.ASTNode, error) {
 
 	function := p.CurrentToken
 
-	if err := p.eat(lexer.TokenFunction); err != nil {
+	if err := p.eat(lexer.TokenIdentifier); err != nil {
+		return nil, err
+	}
+	if err := p.eat(lexer.TokenLRB); err != nil {
 		return nil, err
 	}
 
-	switch function.Value {
-	case "Sum":
-		expression, err := p.expression()
+	var args []nodes.ASTNode
+
+	// This would be the list of nodes (relation_term vertex_term)
+	expr, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+
+	// First argument to every function is the expression
+	args = append(args, expr)
+
+	for p.CurrentToken.Type == lexer.TokenComma {
+		if err := p.eat(lexer.TokenComma); err != nil {
+			return nil, err
+		}
+
+		argExpr, err := p.expression()
 		if err != nil {
 			return nil, err
 		}
-		args := []nodes.ASTNode{expression}
 
-		for p.CurrentToken.Type == lexer.TokenComma {
-			args = append(args, &nodes.StringNode{Value: p.CurrentToken.Value})
-		}
-		return &nodes.SumFuncNode{FunctionName: nodes.SumFunc, Args: args}, nil
-	default:
-		return nil, &errors.UnknownBuiltinFunc{SourceContext: p.Lexer.GetSourceContext(), ActualToken: p.CurrentToken}
+		args = append(args, argExpr)
 	}
+
+	if err := p.eat(lexer.TokenRRB); err != nil {
+		return nil, err
+	}
+
+	return &nodes.FuncNode{FunctionName: &nodes.StringNode{Value: function.Value}, Args: args}, nil
 }
 
 func (p *Parser) factor() (nodes.ASTNode, error) {
+	switch p.CurrentToken.Type {
 	// LRB expression RRB
-	if p.CurrentToken.Type == lexer.TokenLRB {
+	case lexer.TokenLRB:
 		// LRB
 		if err := p.eat(lexer.TokenLRB); err != nil {
 			return nil, err
@@ -463,15 +502,9 @@ func (p *Parser) factor() (nodes.ASTNode, error) {
 		}
 
 		return expression, nil
-	}
 
-	// builtin_func
-	if p.CurrentToken.Type == lexer.TokenFunction {
-		return p.builtinFunc()
-	}
-
-	// relation_term vertex_term
-	if p.CurrentToken.Type == lexer.TokenLSB {
+		// relation_term vertex_term
+	case lexer.TokenHash:
 		relationTerm, err := p.relationTerm()
 		if err != nil {
 			return nil, err
@@ -482,20 +515,17 @@ func (p *Parser) factor() (nodes.ASTNode, error) {
 		}
 
 		return &nodes.RelationNode{Edge: relationTerm, Vertex: vertexTerm}, nil
-	}
 
-	// INT
-	if p.CurrentToken.Type == lexer.TokenIntegerConstant {
+		// INT
+	case lexer.TokenIntegerConstant:
 		return p.integer()
-	}
 
-	// STRING
-	if p.CurrentToken.Type == lexer.TokenStringConstant {
+		// STRING
+	case lexer.TokenStringConstant:
 		return p.string()
-	}
 
-	// property_id (eg: .name)
-	if p.CurrentToken.Type == lexer.TokenDot {
+		// property_id (eg: .name)
+	case lexer.TokenDot:
 		if err := p.eat(lexer.TokenDot); err != nil {
 			return nil, err
 		}
@@ -507,70 +537,24 @@ func (p *Parser) factor() (nodes.ASTNode, error) {
 		return &nodes.PropertyNode{
 			PropertyName: &nodes.StringNode{Value: property}, Alias: nil,
 		}, nil
-	}
 
-	// property_id (eg: A.name)
-	// vertex_term  (eg: Person)
-	if p.CurrentToken.Type == lexer.TokenIdentifier {
-		id := p.CurrentToken.Value
-		if err := p.eat(lexer.TokenIdentifier); err != nil {
-			return nil, err
+		// property_id (eg: A.name)
+		// vertex_term  (eg: Person)
+		// function (eg: Sum())
+	case lexer.TokenIdentifier:
+		switch p.Lexer.PeekNextToken().Type {
+		// property_id
+		case lexer.TokenDot:
+			return p.propertyId()
+		// function_term
+		case lexer.TokenLRB:
+			return p.functionTerm()
+		// vertex_term
+		default:
+			return p.vertexTerm()
 		}
-
-		if p.CurrentToken.Type == lexer.TokenDot {
-			// property_id (eg: A.name)
-			if err := p.eat(lexer.TokenDot); err != nil {
-				return nil, err
-			}
-			property := p.CurrentToken.Value
-			if err := p.eat(lexer.TokenIdentifier); err != nil {
-				return nil, err
-			}
-
-			return &nodes.PropertyNode{
-				PropertyName: &nodes.StringNode{Value: property}, Alias: &nodes.StringNode{Value: id},
-			}, nil
-		}
-
-		alias := new(nodes.StringNode)
-		if p.CurrentToken.Type == lexer.TokenAlias {
-			// vertex_term (eg: Person)
-
-			// vertex: ID (as ID)*
-			if err := p.eat(lexer.TokenAlias); err != nil {
-				return nil, err
-			}
-
-			alias.Value = p.CurrentToken.Value
-			if err := p.eat(lexer.TokenIdentifier); err != nil {
-				return nil, err
-			}
-		}
-
-		vertex := &nodes.VertexNode{
-			VertexName: &nodes.StringNode{Value: id},
-			Alias:      alias,
-		}
-
-		// (LCB expression RCB)?
-		if p.CurrentToken.Type == lexer.TokenLCB {
-			if err := p.eat(lexer.TokenLCB); err != nil {
-				return nil, err
-			}
-			condition, err := p.expression()
-			if err != nil {
-				return nil, err
-			}
-			if err := p.eat(lexer.TokenRCB); err != nil {
-				return nil, err
-			}
-			return &nodes.VertexTermNode{Vertex: vertex, Conditions: condition}, nil
-		}
-		return &nodes.VertexTermNode{Vertex: vertex, Conditions: nil}, nil
-	}
-
-	// vertex_term  (Unit)
-	if p.CurrentToken.Type == lexer.TokenLRB {
+		// vertex_term  (Unit)
+	case lexer.TokenAny:
 		return p.vertexTerm()
 	}
 
@@ -580,7 +564,7 @@ func (p *Parser) factor() (nodes.ASTNode, error) {
 		SuggestedTokens: []lexer.TokenType{
 			lexer.TokenLRB,
 			lexer.TokenFunction,
-			lexer.TokenEdge,
+			lexer.TokenHash,
 			lexer.TokenIntegerConstant,
 			lexer.TokenStringConstant,
 			lexer.TokenDot,
@@ -641,29 +625,49 @@ func (p *Parser) operation() (nodes.ASTNode, error) {
 	return termLeft, nil
 }
 
-// relation_term: (LSB (integer | (integer? DOT DOT integer?))? RSB) relation
+// relation_term: HASH relation (LSB (integer | (integer? DOT DOT integer?))? RSB)
 // relation: ID | Unit
-// Unit: LRB RRB
 func (p *Parser) relationTerm() (nodes.ASTNode, error) {
 	relation := new(nodes.EdgeNode)
 	// default Upper/Lower bounds
-	relation.LowerBound = &nodes.IntNode{Value: 0}
-	relation.UpperBound = &nodes.IntNode{Value: math.MaxInt}
+	relation.LowerBound = &nodes.IntNode{Value: 1}
+	relation.UpperBound = &nodes.IntNode{Value: 1}
 
-	// relation_term: (LSB (integer | (integer? DOT DOT integer?))? RSB) relation
-	if err := p.eat(lexer.TokenLSB); err != nil {
+	if err := p.eat(lexer.TokenHash); err != nil {
 		return nil, err
 	}
 
-	if p.CurrentToken.Type == lexer.TokenRSB {
-		// []Relation
-		relation.LowerBound = &nodes.IntNode{Value: 1}
-		relation.UpperBound = &nodes.IntNode{Value: 1}
-
-		if err := p.eat(lexer.TokenRSB); err != nil {
+	// relation_term: HASH relation (LSB (integer | (integer? DOT DOT integer?))? RSB)
+	if p.CurrentToken.Type == lexer.TokenIdentifier {
+		// EdgeName
+		relation.EdgeName = &nodes.StringNode{Value: p.CurrentToken.Value}
+		if err := p.eat(lexer.TokenIdentifier); err != nil {
+			return nil, err
+		}
+	} else if p.CurrentToken.Type == lexer.TokenAny {
+		// Any
+		relation.EdgeName = nil
+		if err := p.eat(lexer.TokenAny); err != nil {
 			return nil, err
 		}
 	} else {
+		return nil, &errors.UnexpectedToken{
+			SourceContext:   p.Lexer.GetSourceContext(),
+			ActualToken:     p.CurrentToken,
+			SuggestedTokens: []lexer.TokenType{lexer.TokenIdentifier},
+		}
+	}
+
+	// Range Operation [x..y]
+	if p.CurrentToken.Type == lexer.TokenLSB {
+		if err := p.eat(lexer.TokenLSB); err != nil {
+			return nil, err
+		}
+
+		// Default range is 1
+		relation.LowerBound = &nodes.IntNode{Value: 0}
+		relation.UpperBound = &nodes.IntNode{Value: 1}
+
 		// Integer
 		if p.CurrentToken.Type == lexer.TokenIntegerConstant {
 			number, err := strconv.Atoi(p.CurrentToken.Value)
@@ -678,6 +682,7 @@ func (p *Parser) relationTerm() (nodes.ASTNode, error) {
 			}
 
 		}
+
 		// DOT DOT
 		if p.CurrentToken.Type == lexer.TokenRange {
 			relation.UpperBound = &nodes.IntNode{Value: math.MaxInt}
@@ -685,20 +690,20 @@ func (p *Parser) relationTerm() (nodes.ASTNode, error) {
 			if err := p.eat(lexer.TokenRange); err != nil {
 				return nil, err
 			}
+		}
 
-			// Integer
-			if p.CurrentToken.Type == lexer.TokenIntegerConstant {
-				number, err := strconv.Atoi(p.CurrentToken.Value)
-				if err != nil {
-					return nil, err
-				}
+		// Integer
+		if p.CurrentToken.Type == lexer.TokenIntegerConstant {
+			number, err := strconv.Atoi(p.CurrentToken.Value)
+			if err != nil {
+				return nil, err
+			}
 
-				// Lower bound is already set
-				relation.UpperBound = &nodes.IntNode{Value: number}
+			// Lower bound is already set
+			relation.UpperBound = &nodes.IntNode{Value: number}
 
-				if err := p.eat(lexer.TokenIntegerConstant); err != nil {
-					return nil, err
-				}
+			if err := p.eat(lexer.TokenIntegerConstant); err != nil {
+				return nil, err
 			}
 		}
 
@@ -707,34 +712,10 @@ func (p *Parser) relationTerm() (nodes.ASTNode, error) {
 		}
 	}
 
-	if p.CurrentToken.Type == lexer.TokenIdentifier {
-		// EdgeName
-		relation.EdgeName = &nodes.StringNode{Value: p.CurrentToken.Value}
-		if err := p.eat(lexer.TokenIdentifier); err != nil {
-			return nil, err
-		}
-	} else if p.CurrentToken.Type == lexer.TokenLRB {
-		// Unit
-		if err := p.eat(lexer.TokenLRB); err != nil {
-			return nil, err
-		}
-		if err := p.eat(lexer.TokenRRB); err != nil {
-			return nil, err
-		}
-		relation.EdgeName = nil
-	} else {
-    panic(p.CurrentToken)
-		return nil, &errors.UnexpectedToken{
-			SourceContext:   p.Lexer.GetSourceContext(),
-			ActualToken:     p.CurrentToken,
-			SuggestedTokens: []lexer.TokenType{lexer.TokenIdentifier, lexer.TokenLRB},
-		}
-	}
-
 	return relation, nil
 }
 
-// vertex_term: vertex (LCB expression RCB)?
+// vertex_term: vertex (as ID)? (LCB expression RCB)?
 func (p *Parser) vertexTerm() (nodes.ASTNode, error) {
 	// vertex: ID (as ID)? | unit
 	vertex := new(nodes.VertexNode)
@@ -753,11 +734,8 @@ func (p *Parser) vertexTerm() (nodes.ASTNode, error) {
 				return nil, err
 			}
 		}
-	} else if p.CurrentToken.Type == lexer.TokenLRB {
-		if err := p.eat(lexer.TokenLRB); err != nil {
-			return nil, err
-		}
-		if err := p.eat(lexer.TokenRRB); err != nil {
+	} else if p.CurrentToken.Type == lexer.TokenAny {
+		if err := p.eat(lexer.TokenAny); err != nil {
 			return nil, err
 		}
 		vertex.VertexName = nil

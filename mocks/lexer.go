@@ -18,3 +18,16 @@ func (m *MockLexer) GetSourceContext() string {
 	args := m.Called()
 	return args.Get(0).(string)
 }
+
+func (m *MockLexer) Commit() {
+	_ = m.Called()
+}
+
+func (m *MockLexer) Rollback() {
+	_ = m.Called()
+}
+
+func (m *MockLexer) PeekNextToken() *lexer.Token {
+	args := m.Called()
+	return args.Get(0).(*lexer.Token)
+}

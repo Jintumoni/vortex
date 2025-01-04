@@ -28,8 +28,8 @@ type QueryStatementNode struct {
 	Expression ASTNode
 }
 
-type SumFuncNode struct {
-	FunctionName FuncType
+type FuncNode struct {
+	FunctionName *StringNode
 	Args         []ASTNode
 }
 

@@ -24,36 +24,3 @@ func GetAllEdgeTypes() []EdgeType {
 		TwoWayEdge,
 	}
 }
-
-type FuncType int
-
-const (
-	SumFunc FuncType = iota + 1
-	MaxFunc
-	MinFunc
-	StartWithFunc
-)
-
-func (e FuncType) String() string {
-	switch e {
-	case SumFunc:
-		return "Sum"
-	case MaxFunc:
-		return "Max"
-	case MinFunc:
-		return "Min"
-	case StartWithFunc:
-		return "StartsWith"
-	default:
-		return ""
-	}
-}
-
-func GetAllFuncTypes() []FuncType {
-	return []FuncType{
-		SumFunc,
-		MaxFunc,
-		MinFunc,
-		StartWithFunc,
-	}
-}

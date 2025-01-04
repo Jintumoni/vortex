@@ -92,16 +92,16 @@ Relation LivesIn {
 
 Query Sum(Person as A {
 		.name = "Hi"
-		or (StartsWith(.name, 'H') and .age > 10)
-		and LivesIn () {
-			Within[..] Country {
+		| (StartsWith(.name, 'H') and .age > 10)
+		& #LivesIn Any {
+            #Within[..] Country {
 				.name="India"
-				and Within Continent
+                #Within Continent
 			}
 		}
-		and Sum(FriendsWith Person {
-			LivesIn () {
-				Within Country{.name="USA"}
+		& Sum(#FriendsWith Person {
+            #LivesIn Any {
+                #Within Country{.name="USA"}
 			}
 		}, .salary) < .salary
 	}, .age)
@@ -110,8 +110,8 @@ Query Sum(Person as A {
 # Query can be recursive
 Query {
 	Person as A {
-		Sum(FriendsWith Person {
-			FriendsWith A 
+		Sum(#FriendsWith Person {
+            #FriendsWith A 
 		}, .salary) < .salary
 	}
 }

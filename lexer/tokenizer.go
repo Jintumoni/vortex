@@ -25,6 +25,8 @@ const (
 	TokenRRB
 	TokenLSB
 	TokenRSB
+	TokenHash
+	TokenAny
 	TokenInteger
 	TokenIntegerConstant
 	TokenString
@@ -64,9 +66,9 @@ func (t TokenType) String() string {
 	case TokenNotEqual:
 		return "!="
 	case TokenOr:
-		return "or"
+		return "|"
 	case TokenAnd:
-		return "and"
+		return "&"
 	case TokenAlias:
 		return "as"
 	case TokenComma:
@@ -117,20 +119,14 @@ func (t TokenType) String() string {
 }
 
 var ReservedKeywords = map[string]TokenType{
-	"as":         TokenAlias,
-	"and":        TokenAnd,
-	"or":         TokenOr,
-	"int":        TokenInteger,
-	"string":     TokenString,
-	"Sum":        TokenFunction,
-	"Max":        TokenFunction,
-	"Min":        TokenFunction,
-	"StartsWith": TokenFunction,
-	"Schema":     TokenSchema,
-	"Vertex":     TokenVertex,
-	"Relation":   TokenRelation,
-	"Edge":       TokenEdge,
-	"Query":      TokenQuery,
+	"as":       TokenAlias,
+	"int":      TokenInteger,
+	"string":   TokenString,
+	"Schema":   TokenSchema,
+	"Vertex":   TokenVertex,
+	"Relation": TokenRelation,
+	"Edge":     TokenEdge,
+	"Query":    TokenQuery,
 }
 
 type Token struct {

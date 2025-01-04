@@ -29,13 +29,20 @@ func main() {
     Harry London
   }
 
-  Query Sum(Person as P {
-      []FriendsWith Person {
-        2 + .income + 100 > P.income + 1
-        and .name = "John" and (.age = 1 or P.salary > 100)
-        and []FriendsWith P
-      }
-  })
+  Query Person as A {
+    .name = "Hi"
+    & Sum(#LivesIn [1..2] Any {
+        #Within [..] Country {
+            .name = "India"
+            & #Within Continent
+        }
+    }, .age, .income) = 10
+    & #FriendsWith Person {
+	     #LivesIn Any {
+            #Within Country {.name="USA"}
+        }
+    }
+  }
   `
 
 	lexer := lexer.NewLexer(strings.NewReader(input))

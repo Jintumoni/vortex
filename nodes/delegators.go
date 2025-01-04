@@ -64,6 +64,6 @@ func (node *QueryStatementNode) Accept(visitor Visitor) {
 	visitor.VisitQueryStatement(node)
 }
 
-func (node *SumFuncNode) Accept(visitor Visitor) {
-	visitor.VisitSumFunc(node)
+func (node *FuncNode) Accept(visitor Visitor) {
+	visitor.VisitFunc(node)
 }

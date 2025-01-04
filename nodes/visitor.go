@@ -17,5 +17,5 @@ type Visitor interface {
 	VisitVertexTermNode(node *VertexTermNode)
 	VisitRelationNode(node *RelationNode)
 	VisitQueryStatement(node *QueryStatementNode)
-	VisitSumFunc(node *SumFuncNode)
+	VisitFunc(node *FuncNode)
 }

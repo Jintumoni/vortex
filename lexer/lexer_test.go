@@ -1,20 +1,22 @@
 package lexer
 
 import (
-	"github.com/stretchr/testify/assert"
+	"io"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAdvance(t *testing.T) {
 	mockData := "Hello"
 	l := NewLexer(strings.NewReader(mockData))
 	if l.Index != 0 {
-		assert.Equal(t, 0, l.Index)
+		assert.Equal(t, 0, l.PeekIndex)
 	}
 	l.advance()
 	if l.Index != 1 {
-		assert.Equal(t, 1, l.Index)
+		assert.Equal(t, 1, l.PeekIndex)
 	}
 }
 
@@ -36,15 +38,15 @@ func TestIgnoreSpace(t *testing.T) {
 	mockData := "Hello  \t  \n\n     World"
 	l := NewLexer(strings.NewReader(mockData))
 	l.ignoreSpace()
-	if l.Index != 0 {
-		assert.Equal(t, 0, l.Index)
+	if l.PeekIndex != 0 {
+		assert.Equal(t, 0, l.PeekIndex)
 	}
 
-	l.Index = strings.Index(mockData, " ")
+	l.PeekIndex = strings.Index(mockData, " ")
 	l.ignoreSpace()
 
-	if l.Index != strings.Index(mockData, "World") {
-		assert.Equal(t, 17, l.Index)
+	if l.PeekIndex != strings.Index(mockData, "World") {
+		assert.Equal(t, 17, l.PeekIndex)
 	}
 }
 
@@ -104,9 +106,9 @@ func TestGetStringTokenShouldReturnInvalidToken(t *testing.T) {
 func TestGetNextToken(t *testing.T) {
 	mockData := `
   Person {
-    FriendsWith Person {
-      LivesIn Country{.name="India"}
-      and .salary >= 100
+    #FriendsWith Person {
+      #LivesIn Country{.name="India"}
+      & .salary >= 100
     }
   }
   `
@@ -118,9 +120,11 @@ func TestGetNextToken(t *testing.T) {
 	}{
 		{TokenIdentifier, "Person"},
 		{TokenLCB, "{"},
+		{TokenHash, "#"},
 		{TokenIdentifier, "FriendsWith"},
 		{TokenIdentifier, "Person"},
 		{TokenLCB, "{"},
+		{TokenHash, "#"},
 		{TokenIdentifier, "LivesIn"},
 		{TokenIdentifier, "Country"},
 		{TokenLCB, "{"},
@@ -129,7 +133,7 @@ func TestGetNextToken(t *testing.T) {
 		{TokenEqual, "="},
 		{TokenStringConstant, "India"},
 		{TokenRCB, "}"},
-		{TokenAnd, "and"},
+		{TokenAnd, "&"},
 		{TokenDot, "."},
 		{TokenIdentifier, "salary"},
 		{TokenGreaterThanEqual, ">="},
@@ -149,9 +153,9 @@ func TestGetNextToken(t *testing.T) {
 func TestGetNextTokenWithRangeExpression(t *testing.T) {
 	mockData := `
   Person {
-    FriendsWith Person {
-      LivesIn[2..] Country{.name="India"}
-      and .salary >= 100
+    #FriendsWith Person {
+      #LivesIn [2..] Country{.name="India"}
+      & .salary >= 100
     }
   }
   `
@@ -163,9 +167,11 @@ func TestGetNextTokenWithRangeExpression(t *testing.T) {
 	}{
 		{TokenIdentifier, "Person"},
 		{TokenLCB, "{"},
+		{TokenHash, "#"},
 		{TokenIdentifier, "FriendsWith"},
 		{TokenIdentifier, "Person"},
 		{TokenLCB, "{"},
+		{TokenHash, "#"},
 		{TokenIdentifier, "LivesIn"},
 		{TokenLSB, "["},
 		{TokenIntegerConstant, "2"},
@@ -178,7 +184,7 @@ func TestGetNextTokenWithRangeExpression(t *testing.T) {
 		{TokenEqual, "="},
 		{TokenStringConstant, "India"},
 		{TokenRCB, "}"},
-		{TokenAnd, "and"},
+		{TokenAnd, "&"},
 		{TokenDot, "."},
 		{TokenIdentifier, "salary"},
 		{TokenGreaterThanEqual, ">="},
@@ -198,9 +204,9 @@ func TestGetNextTokenWithRangeExpression(t *testing.T) {
 func TestGetNextTokenWithAlias(t *testing.T) {
 	mockData := `
   Person as A {
-    FriendsWith Person {
-      LivesIn[2..] Country{.name="India"}
-      and .salary >= A.salary
+    #FriendsWith Person {
+      #LivesIn [2..] Country{.name="India"}
+      & .salary >= A.salary
     }
   }
   `
@@ -214,9 +220,11 @@ func TestGetNextTokenWithAlias(t *testing.T) {
 		{TokenAlias, "as"},
 		{TokenIdentifier, "A"},
 		{TokenLCB, "{"},
+		{TokenHash, "#"},
 		{TokenIdentifier, "FriendsWith"},
 		{TokenIdentifier, "Person"},
 		{TokenLCB, "{"},
+		{TokenHash, "#"},
 		{TokenIdentifier, "LivesIn"},
 		{TokenLSB, "["},
 		{TokenIntegerConstant, "2"},
@@ -229,7 +237,7 @@ func TestGetNextTokenWithAlias(t *testing.T) {
 		{TokenEqual, "="},
 		{TokenStringConstant, "India"},
 		{TokenRCB, "}"},
-		{TokenAnd, "and"},
+		{TokenAnd, "&"},
 		{TokenDot, "."},
 		{TokenIdentifier, "salary"},
 		{TokenGreaterThanEqual, ">="},
@@ -251,9 +259,9 @@ func TestGetNextTokenWithAlias(t *testing.T) {
 func TestGetNextTokenWithFunctions(t *testing.T) {
 	mockData := `
   Person as A {
-    Sum(FriendsWith Person {
-      LivesIn[2..] Country{.name="India"}
-      and .salary >= A.salary
+    Sum(#FriendsWith Person {
+    #LivesIn [2..] Country{.name="India"}
+      & .salary >= A.salary
     }, .salary)
   }
   `
@@ -267,11 +275,13 @@ func TestGetNextTokenWithFunctions(t *testing.T) {
 		{TokenAlias, "as"},
 		{TokenIdentifier, "A"},
 		{TokenLCB, "{"},
-		{TokenFunction, "Sum"},
+		{TokenIdentifier, "Sum"},
 		{TokenLRB, "("},
+		{TokenHash, "#"},
 		{TokenIdentifier, "FriendsWith"},
 		{TokenIdentifier, "Person"},
 		{TokenLCB, "{"},
+		{TokenHash, "#"},
 		{TokenIdentifier, "LivesIn"},
 		{TokenLSB, "["},
 		{TokenIntegerConstant, "2"},
@@ -284,7 +294,7 @@ func TestGetNextTokenWithFunctions(t *testing.T) {
 		{TokenEqual, "="},
 		{TokenStringConstant, "India"},
 		{TokenRCB, "}"},
-		{TokenAnd, "and"},
+		{TokenAnd, "&"},
 		{TokenDot, "."},
 		{TokenIdentifier, "salary"},
 		{TokenGreaterThanEqual, ">="},
@@ -341,16 +351,36 @@ func TestMultilineToken(t *testing.T) {
 
 func TestGetSourceContext(t *testing.T) {
 	mockData := `Person as A {
-    Sum(FriendsWith Person {
-      LivesIn[2..] Country{.name="India"}
-      and .salary >= A.salary`
+    Sum(#FriendsWith Person {
+      #LivesIn[2..] Country{.name="India"}
+      & .salary >= A.salary`
 	l := NewLexer(strings.NewReader(mockData))
 	l.Row = 3
 	source := l.GetSourceContext()
 
-  // Tabs characters are present
-	assert.Equal(t, `2	|	    Sum(FriendsWith Person {
-3	|	      LivesIn[2..] Country{.name="India"}
-4	|	      and .salary >= A.salary
+	// Tabs characters are present
+	assert.Equal(t, `2	|	    Sum(#FriendsWith Person {
+3	|	      #LivesIn[2..] Country{.name="India"}
+4	|	      & .salary >= A.salary
 `, source)
+}
+
+func TestNewLexer(t *testing.T) {
+	tests := []struct {
+		name string // description of this test case
+		// Named input parameters for target function.
+		r    io.Reader
+		want *Lexer
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := NewLexer(tt.r)
+			// TODO: update the condition below to compare got with tt.want.
+			if true {
+				t.Errorf("NewLexer() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

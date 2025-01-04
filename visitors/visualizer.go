@@ -188,8 +188,8 @@ func (v *Visualizer) VisitQueryStatement(node *nodes.QueryStatementNode) {
 	v.shiftLeft()
 }
 
-func (v *Visualizer) VisitSumFunc(node *nodes.SumFuncNode) {
-	v.print("Sum: BuiltinFunc")
+func (v *Visualizer) VisitFunc(node *nodes.FuncNode) {
+	v.print(fmt.Sprintf("%s: Function", node.FunctionName.Value))
 	v.shiftRight(len(node.Args))
 	for _, arg := range node.Args {
 		arg.Accept(v)

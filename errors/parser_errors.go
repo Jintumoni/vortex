@@ -105,32 +105,3 @@ func (e *UnknownStatement) Error() string {
 
 	return buffer.String()
 }
-
-type UnknownBuiltinFunc struct {
-	SourceContext string
-	ActualToken   *lexer.Token
-}
-
-func (e *UnknownBuiltinFunc) Error() string {
-	buffer := new(bytes.Buffer)
-	buffer.WriteString(color.RedString(fmt.Sprintf("Error: Unknown \"%s\" found\n", e.ActualToken.Value)))
-
-	buffer.WriteString(e.SourceContext)
-
-	buffer.WriteString(strings.Repeat("\t", 2))
-	buffer.WriteString(strings.Repeat(" ", e.ActualToken.Col))
-
-	buffer.WriteString(color.BlueString(strings.Repeat("^", e.ActualToken.Span)))
-	buffer.WriteString(color.BlueString("--"))
-
-	buffer.WriteString(color.BlueString(fmt.Sprintf("Expected one of: ")))
-	for i, t := range nodes.GetAllFuncTypes() {
-		if i > 0 {
-			buffer.WriteString(color.BlueString(", "))
-		}
-		buffer.WriteString(color.BlueString(fmt.Sprintf("\"%s\"", t)))
-	}
-	buffer.WriteString("\n")
-
-	return buffer.String()
-}

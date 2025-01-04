@@ -10,10 +10,14 @@ import (
 
 type LexerInterface interface {
 	GetNextToken() *Token
+	PeekNextToken() *Token
 	GetSourceContext() string
+	Commit()
+	Rollback()
 }
 
 type Lexer struct {
+	PeekIndex    int
 	Index        int
 	Row          int
 	Col          int
@@ -25,55 +29,64 @@ func NewLexer(r io.Reader) *Lexer {
 	data, _ := io.ReadAll(r)
 	return &Lexer{
 		Index:        0,
+		PeekIndex:    0,
 		CurrentToken: nil,
 		Input:        data,
 	}
 }
 
 func (l *Lexer) Peek() byte {
-	if l.Index+1 < len(l.Input) {
-		return l.Input[l.Index+1]
+	if l.PeekIndex+1 < len(l.Input) {
+		return l.Input[l.PeekIndex+1]
 	}
 
 	return 0
 }
 
+func (l *Lexer) Commit() {
+	l.Index = l.PeekIndex
+}
+
+func (l *Lexer) Rollback() {
+	l.PeekIndex = l.Index
+}
+
 func (l *Lexer) advance() {
 	l.Col++
-	if l.Input[l.Index] == '\n' {
+	if l.Input[l.PeekIndex] == '\n' {
 		l.Row++
 		l.Col = 0
 	}
-	l.Index++
+	l.PeekIndex++
 }
 
 // Use this method only for single line tokens
 // Use the Token{} struct directly for multiline tokens
 func (l *Lexer) addSLToken(token TokenType, value string) *Token {
-  return &Token{
-    Type: token,
-    Value: value,
-    Row: l.Row,
-    Col: l.Col - len(value),
-    Span: len(value),
-  }
+	return &Token{
+		Type:  token,
+		Value: value,
+		Row:   l.Row,
+		Col:   l.Col - len(value),
+		Span:  len(value),
+	}
 }
 
 func (l *Lexer) ignoreSpace() {
-	for l.Index < len(l.Input) && unicode.IsSpace(rune(l.Input[l.Index])) {
+	for l.PeekIndex < len(l.Input) && unicode.IsSpace(rune(l.Input[l.PeekIndex])) {
 		l.advance()
 	}
 }
 
 func (l *Lexer) getNumberToken() *Token {
-	if !unicode.IsNumber(rune(l.Input[l.Index])) {
+	if !unicode.IsNumber(rune(l.Input[l.PeekIndex])) {
 		return l.addSLToken(TokenInvalid, "INVALID")
 	}
 
 	row, col := l.Row, l.Col
 	buffer := bytes.Buffer{}
-	for l.Index < len(l.Input) && unicode.IsNumber(rune(l.Input[l.Index])) {
-		buffer.WriteByte(l.Input[l.Index])
+	for l.PeekIndex < len(l.Input) && unicode.IsNumber(rune(l.Input[l.PeekIndex])) {
+		buffer.WriteByte(l.Input[l.PeekIndex])
 		l.advance()
 	}
 
@@ -81,15 +94,15 @@ func (l *Lexer) getNumberToken() *Token {
 }
 
 func (l *Lexer) getIDToken() *Token {
-	if !unicode.IsLetter(rune(l.Input[l.Index])) {
+	if !unicode.IsLetter(rune(l.Input[l.PeekIndex])) {
 		return &Token{TokenInvalid, "INVALID", l.Row, l.Col, 1}
 	}
 
 	row, col := l.Row, l.Col
 	buffer := bytes.Buffer{}
-	for l.Index < len(l.Input) {
-		if unicode.IsLetter(rune(l.Input[l.Index])) || unicode.IsNumber(rune(l.Input[l.Index])) {
-			buffer.WriteByte(l.Input[l.Index])
+	for l.PeekIndex < len(l.Input) {
+		if unicode.IsLetter(rune(l.Input[l.PeekIndex])) || unicode.IsNumber(rune(l.Input[l.PeekIndex])) {
+			buffer.WriteByte(l.Input[l.PeekIndex])
 		} else {
 			break
 		}
@@ -107,18 +120,18 @@ func (l *Lexer) getIDToken() *Token {
 func (l *Lexer) getStringToken() *Token {
 	buffer := bytes.Buffer{}
 
-	if l.Input[l.Index] != '"' {
+	if l.Input[l.PeekIndex] != '"' {
 		return l.addSLToken(TokenInvalid, "INVALID")
 	}
 	l.advance()
 
 	row, col := l.Row, l.Col
-	for l.Index < len(l.Input) && l.Input[l.Index] != '"' {
-		buffer.WriteByte(l.Input[l.Index])
+	for l.PeekIndex < len(l.Input) && l.Input[l.PeekIndex] != '"' {
+		buffer.WriteByte(l.Input[l.PeekIndex])
 		l.advance()
 	}
 
-	if l.Index >= len(l.Input) || l.Input[l.Index] != '"' {
+	if l.PeekIndex >= len(l.Input) || l.Input[l.PeekIndex] != '"' {
 		return l.addSLToken(TokenInvalid, "INVALID")
 	}
 	l.advance()
@@ -129,17 +142,17 @@ func (l *Lexer) getStringToken() *Token {
 func (l *Lexer) GetNextToken() *Token {
 	l.ignoreSpace()
 
-	if l.Index >= len(l.Input) {
+	if l.PeekIndex >= len(l.Input) {
 		return l.addSLToken(TokenEOF, "EOF")
 	}
 
-	if unicode.IsLetter(rune(l.Input[l.Index])) {
+	if unicode.IsLetter(rune(l.Input[l.PeekIndex])) {
 		return l.getIDToken()
-	} else if unicode.IsNumber(rune(l.Input[l.Index])) {
+	} else if unicode.IsNumber(rune(l.Input[l.PeekIndex])) {
 		return l.getNumberToken()
 	}
 
-	switch l.Input[l.Index] {
+	switch l.Input[l.PeekIndex] {
 	case '+':
 		l.advance()
 		return l.addSLToken(TokenPlus, "+")
@@ -173,6 +186,15 @@ func (l *Lexer) GetNextToken() *Token {
 	case ']':
 		l.advance()
 		return l.addSLToken(TokenRSB, "]")
+	case '|':
+		l.advance()
+		return l.addSLToken(TokenOr, "|")
+	case '&':
+		l.advance()
+		return l.addSLToken(TokenAnd, "&")
+	case '#':
+		l.advance()
+		return l.addSLToken(TokenHash, "#")
 	case '.':
 		if l.Peek() == '.' {
 			l.advance()
@@ -209,6 +231,12 @@ func (l *Lexer) GetNextToken() *Token {
 		l.advance()
 		return l.addSLToken(TokenInvalid, "INVALID")
 	}
+}
+
+func (l *Lexer) PeekNextToken() *Token {
+	token := l.GetNextToken()
+	l.Rollback()
+	return token
 }
 
 func (l *Lexer) GetSourceContext() string {

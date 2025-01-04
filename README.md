@@ -70,9 +70,11 @@ The combination of these entities gives you super-power to write complex graph q
 
 ```sql
 Query Person {
-    []FriendsWith Person
+    #FriendsWith Person
 }
 ```
+
+The `#` sign is used to mark an edge.
 
 ## Find all `Person` named "John" who have a mutual friend
 
@@ -81,46 +83,48 @@ A `Vertex` can be aliased for referencing later. This allows defining recursive 
 ```sql
 Query Person as A { 
    .name = 'John'
-   and []FriendsWith Person {
-       FriendsWith A
+   & #FriendsWith Person {
+        #FriendsWith A
    }
 }
 ```
 
 ## Find all `Person` whose salary is strictly greater than all their friends' salary combined.
 
-`()` nodes matches with any vertex and `[]()` matches with any edge.
+`Any` nodes matches with any vertex or edge.
 
 ```sql
 Query Person as A { 
-   Sum([]FriendsWith Person {
-       []() ()
+   Sum(#FriendsWith Person {
+       Any Any
    }, .salary) < .salary
 }
 ```
 
+The `Any`s in the query are not needed to convey the meaning though and the whole scope after `Person` marked by `{ }` can be skipped.
+
 A subquery has its own scope. The `.salary` inside sum is scoped to the inner `Person` and the other `.salary` is scoped to the `Person` alised as `A`.
 
-You can be explicit about it with `A.salary` though.
+You can be explicit about it with `A.salary` as well.
 
 ## Try to figure out the query below
 
 ```sql
 Query Sum(Person as A {
     .name = "Hi"
-    or (StartsWith(.name, 'H') and .age > 10)
-    and [1..2]LivesIn () {
-        [..]Within Country {
+    | (StartsWith(.name, 'H') and .age > 10)
+    & #LivesIn [1..2] () {
+        #Within [..] Country {
             .name="India"
-            and []Within Continent
+            & #Within Continent
         }
     }
-    and Sum([]FriendsWith Person {
-        []LivesIn () {
-            []Within Country{.name="USA"}
+    & Sum(#FriendsWith Person {
+        #LivesIn Any {
+            #Within Country{.name="USA"}
         }
     }, .salary) < .salary
 }, .age)
 ```
 
-The `[..]` syntax states that the edge can be there any number of times, including zero. The default `[]` evaluates to `[1]` to make the edge appear strictly once.
+The `[..]` syntax states that the edge can be there any number of times, including zero. No `[ ]` after the edge denotes the single appearance of the edge.
